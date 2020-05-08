@@ -20,7 +20,8 @@ The raw data has been downloaded from the website
 
 #### Description of the origin of the data set:  
 <font size = "2">
-*Human Activity Recognition database built from the recordings of 30 subjects performing activities of daily living (ADL) while carrying a waist-mounted smartphone with embedded inertial sensors.  
+
+Human Activity Recognition database built from the recordings of 30 subjects performing activities of daily living (ADL) while carrying a waist-mounted smartphone with embedded inertial sensors.  
 The experiments have been carried out with a group of 30 volunteers within an age bracket of 19-48 years. Each person performed six activities (WALKING, WALKING_UPSTAIRS, WALKING_DOWNSTAIRS, SITTING, STANDING, LAYING) wearing a smartphone (Samsung Galaxy S II) on the waist. Using its embedded accelerometer and gyroscope, we captured 3-axial linear acceleration and 3-axial angular velocity at a constant rate of 50Hz. The experiments have been video-recorded to label the data manually. The obtained dataset has been randomly partitioned into two sets, where 70% of the volunteers was selected for generating the training data and 30% the test data.  
 The sensor signals (accelerometer and gyroscope) were pre-processed by applying noise filters and then sampled in fixed-width sliding windows of 2.56 sec and 50% overlap (128 readings/window). The sensor acceleration signal, which has gravitational and body motion components, was separated using a Butterworth low-pass filter into body acceleration and gravity. The gravitational force is assumed to have only low frequency components, therefore a filter with 0.3 Hz cutoff frequency was used. From each window, a vector of features was obtained by calculating variables from the time and frequency domain.*
 </font>   
@@ -49,7 +50,7 @@ In the test folder, the same type of files are available.
 For a detailed description of each feature, please read the associated file. 
 
 ## Steps performed to clean the data set
-In the run_analysis.R file, you will find a script which downloads and re-organizes the data.  
+In the [run_analysis.R](https://github.com/ourbanow/DataScienceCoursera/blob/master/Getting%20and%20cleaning%20data/run_analysis.R) file, you will find a script which downloads and re-organizes the data.  
 **!** Because of privacy concerns, the script does not contain the working directory, which you should set before running the script
 
 #### Phase one: "re-build" the data table
