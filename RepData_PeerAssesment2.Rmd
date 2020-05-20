@@ -1,0 +1,147 @@
+---
+title: Analysis of severe weather events impact on population health and the economy
+  across the United States
+author: "ourbanow"
+date: "5/20/2020"
+output:
+  pdf_document: default
+---
+
+## Synopsis
+Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern.
+The present analysis summarizes and ranks the impact of severe weather events across the United States in terms of fatalities, injuries and property damage, per type of event.
+
+# Data Processing
+
+The data used for this analysis comes from the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database.
+```{r}
+fileURL <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+if (!file.exists("Storm_Data.csv.bz2")) {
+    download.file(fileURL, "Storm_Data.csv.bz2")
+}
+Storm_data <- read.csv("StormData.csv")
+``` 
+A copy of the data can be downloaded from here: `r fileURL`  
+Additional information about this data is available here:  
+* National Weather Service [Storm Data Dcoumentation](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf)  
+* National Climatic Data Center Storm Events [FAQ](https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2FNCDC%20Storm%20Events-FAQ%20Page.pdf)  
+
+The database contains a total of `r dim(Storm_data)[1]` events, for which `r dim(Storm_data)[2]` variables where measured.   
+```{r}
+names(Storm_data)
+```
+
+For this analysis, we are only focusing on the impact of severe weather event, per type, on population health and the economy.
+For further processing we will then ignore non-relevant variables.  
+  
+Specifically, according to NOAA,   
+* The data recording start from Jan. 1950. At that time they recorded one event type, tornado. They add more events gradually and only from Jan. 1996 they start recording all events type. Since our objective is comparing the effects of different weather events, we will focus only on event from Jan. 1996 on.  
+```{r, message=FALSE}
+library(dplyr)
+stormdata <- Storm_data[,c("BGN_DATE", "EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP")]
+stormdata$BGN_DATE <- as.Date(as.character(stormdata$BGN_DATE), "%m/%d/%Y %H:%M:%S")
+stormdata <- filter(stormdata, BGN_DATE >= as.Date("1996-01-01")) 
+```
+
+* Property and Crop damages are expressed in dollars, using different scales which we need to reprocess with the following reading keys:   
+  + B or b = Billion, M or m = Million, K or k = Thousand, H or h = Hundred
+  + The number from one to ten represent the power of ten (10^The number)
+  + The symbols "-", "+" and "?" refer to less than, greater than and low certainty; for the purpose of our analysis, this reading key will be ignored.
+```{r}
+stormdata$PROPDMGEXP <- as.character(stormdata$PROPDMGEXP)
+unique(stormdata$PROPDMGEXP)
+stormdata$PROPDMGEXP[stormdata$PROPDMGEXP %in% c("k", "K")] <- 1000
+stormdata$PROPDMGEXP[stormdata$PROPDMGEXP %in% c("m", "M")] <- 1000000
+stormdata$PROPDMGEXP[stormdata$PROPDMGEXP %in% c("b", "B")] <- 1000000000
+stormdata$PROPDMGEXP[stormdata$PROPDMGEXP %in% c("0", "")] <- 1
+stormdata$PROPDMGEXP <- as.numeric(stormdata$PROPDMGEXP)
+```
+
+```{r}
+stormdata$CROPDMGEXP <- as.character(stormdata$CROPDMGEXP)
+unique(stormdata$CROPDMGEXP)
+stormdata$CROPDMGEXP[stormdata$CROPDMGEXP %in% c("k", "K")] <- 1000
+stormdata$CROPDMGEXP[stormdata$CROPDMGEXP %in% c("m", "M")] <- 1000000
+stormdata$CROPDMGEXP[stormdata$CROPDMGEXP %in% c("b", "B")] <- 1000000000
+stormdata$CROPDMGEXP[stormdata$CROPDMGEXP %in% c("0", "")] <- 1
+stormdata$CROPDMGEXP <- as.numeric(stormdata$CROPDMGEXP)
+```
+* Columns "FATALITIES" and "INJURIES" contains the total number of people who suffered from the event; either directly, indirectly or with a certain delay (e.g. fatality occuring a few days after the end of an event). Both are considered as casualties. 
+
+```{r}
+stormdata <-  
+  stormdata %>%
+   mutate(TOTPROPDMG = PROPDMG * PROPDMGEXP) %>% 
+      mutate(TOTCROPDMG = CROPDMG * CROPDMGEXP) %>% 
+        mutate(CASUALTIES = FATALITIES + INJURIES) %>%
+          mutate(DAMAGE = TOTPROPDMG + TOTCROPDMG) %>%
+           select(BGN_DATE, EVTYPE, DAMAGE, CASUALTIES) %>%
+              filter((DAMAGE+CASUALTIES) != 0)
+head(stormdata)
+```
+
+# Data Analysis 
+
+## In regard of impact on Public Health  
+In order to tackle the question  
+**Which types of events are most harmful with respect to population health?**
+we will focus only on the casualties per type of event. 
+```{r}
+PHimpact <- filter(stormdata, CASUALTIES != 0)
+PHimpact <- 
+  PHimpact %>%
+    group_by(EVTYPE) %>%
+      summarize(sum(CASUALTIES))
+colnames(PHimpact) <- c("Event", "Sum_of_cas")
+PHimpact <- arrange(PHimpact, desc(Sum_of_cas)) 
+```
+
+According to the rule of pareto, we can suppose 20% of the events cause 80% of the casualties, we will thus focus on the top 20% events. 
+```{r}
+pareto1 <- round(length(PHimpact$Sum_of_cas)*0.2)
+PHimpact <- PHimpact[1:pareto1,]
+PHimpact$Event <- factor(PHimpact$Event, levels = PHimpact$Event[order(PHimpact$Sum_of_cas)])
+```
+These are the top `r pareto1` events.  
+See "results" for the final graph. 
+
+## In regard of economic consequences 
+In order to tackle the question  
+**Which types of events have the greatest economic consequences?**  
+we will focus only on the total damage in dollar per type of event.
+```{r}
+ECimpact <- filter(stormdata, DAMAGE != 0)
+ECimpact <- 
+  ECimpact %>%
+    group_by(EVTYPE) %>%
+      summarize(sum(DAMAGE))
+colnames(ECimpact) <- c("Event", "Tot_dam")
+ECimpact <- arrange(ECimpact, desc(Tot_dam)) 
+```
+
+Again, we will use the rule of pareto; we will suppose 20% of the events cause 80% of the damage in value, we will thus focus on the top 20% events.
+```{r}
+pareto2 <- round(length(ECimpact$Tot_dam)*0.2)
+ECimpact <- ECimpact[1:pareto1,]
+ECimpact$Event <- factor(ECimpact$Event, levels = ECimpact$Event[order(ECimpact$Tot_dam)])
+```
+These are the top `r pareto2` events.  
+See "results" for the final graph. 
+
+# Results
+
+```{r, message =FALSE}
+library(ggplot2)
+```
+
+## 1. Which types of events are most harmful with respect to population health?
+```{r}
+g <- ggplot(PHimpact)
+g + geom_col(aes(Sum_of_cas, Event, fill = Sum_of_cas), show.legend = FALSE) + labs(title = "Impact of severe weather events on public health in the US", subtitle = "Number of casualties since 1996", x = "Total number of recorded casualties", y = "") + theme_light() + theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+``` 
+ 
+## 2. Which types of events have the greatest economic consequences?
+```{r}
+q <- ggplot(ECimpact)
+q + geom_col(aes(Tot_dam, Event, fill = Tot_dam), show.legend = FALSE) + labs(title = "Economic impact of severe weather events in the US", subtitle = "Recorded financial damage since 1996", x = "Total damage in $", y = "") + theme_light() + theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
