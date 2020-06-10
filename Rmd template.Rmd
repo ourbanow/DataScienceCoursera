@@ -1,0 +1,63 @@
+---
+title: "Rmd Template"
+subtitle: "Your subtitle here"
+author: "Olivia Urbanowski"
+date: "`r Sys.Date()`"
+urlcolor: blue
+output: pdf_document
+---
+
+
+```{r include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,          # don't show code
+  warning = FALSE,       # don't show warnings
+  message = FALSE,       # don't show messages (less serious warnings)
+  cache = FALSE,         # set to TRUE to save results from last compilation
+  fig.align = "center",  # center figures
+  fig.height=4,          # set default figure size
+  fig.width=6
+)
+library(dplyr)           # load libraries you always use here
+library(ggplot2)
+
+set.seed(27)             # make random results reproducible
+```
+
+# Synopsis
+
+In a few sentences (max 10), present what this report is about.
+
+# Problem 1
+
+Here is a [link](https://adv-r.hadley.nz/). Your homework goes here.
+
+Downloading a file: 
+```{r}
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+if(!file.exists("HAR Dataset.zip")) {
+    download.file(fileUrl,"HAR Dataset.zip", mode="wb" )
+}
+```
+
+Equations and special characters are nicely presented this way: $\mu= 1/\lambda$  
+For inline code, either `hello world` shows the code but doesn't execute it, or `r sys.Date()` will print the date. 
+
+Also, some code:
+
+```{r}
+## here goes your code
+```
+
+Yet more text, and another code section:
+
+```{r}
+knitr::kable(head(select(au, 1:5)),  caption = "Sample vs. Theory")
+```
+\pagebreak
+
+# Code
+
+```{r ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+# this R markdown chunk generates a code appendix
+```
