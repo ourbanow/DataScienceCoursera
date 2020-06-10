@@ -1,0 +1,78 @@
+---
+title: "Practical Machine Learning course project"
+subtitle: "Predicting the correctness of barbell lifts execution"
+author: "ourbanow"
+date: "6/10/2020"
+output: html_document
+---
+
+```{r include = FALSE}
+## This chunk allows all the code to be sent to the appendix
+knitr::opts_chunk$set( echo = FALSE, warning = FALSE,  message = FALSE,  cache = TRUE )
+library(dplyr)          
+library(ggplot2)
+library(caret)
+
+set.seed(23)            
+```
+
+## Executive summary
+
+The purpose of this document is to try and predict the correctness of the execution of barbell lift exercises.  
+The initial study is available here:  [Qualitative Activity Recognition of Weight Lifting Exercises](http://groupware.les.inf.puc-rio.br/public/papers/2013.Velloso.QAR-WLE.pdf).  
+
+For this study, we used the same [initial dataset](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv), but we used our own approach for building a prediction algorithm.  
+The R code can be found in the appendix.
+
+## Data preparation 
+To perform the analysis, six young health participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions: exactly according to the specification (Class A), or with an "error" (Classes B through E). Their physical activity was recorded using different sensors; the results are available in a [dataset](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv) under Creative Common license (CC BY-SA).  
+
+```{r}
+ ## downloading and loading the dataset
+fileUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+if(!file.exists("pml-training.csv")) {
+    download.file(fileUrl,"pml-training.csv", mode="wb" )
+}
+trainset <- read.csv("pml-training.csv")
+```
+
+This dataset consists of 19 622 observations of 160 variables. Unfortunately, many observations are uncomplete - only `r sum(complete.cases(training))` are actually complete. We also do not need all the variables for the predicitions, so the first step is to clean the dataset.
+
+```{r}
+## cleaning dataset
+training <- trainset %>%
+  select(roll_belt:classe) %>% ## removing the names of the participants and the time stamps
+    select(-c(kurtosis_roll_belt:var_yaw_belt)) %>% ## removing variables which have only 1 value per window
+      select(-c(var_accel_arm:var_yaw_arm)) %>%
+        select(-c(kurtosis_roll_arm:amplitude_yaw_arm)) %>%
+          select(-c(kurtosis_roll_dumbbell:amplitude_yaw_dumbbell)) %>%
+            select(-c(var_accel_dumbbell:var_yaw_dumbbell)) %>%
+              select(-c(kurtosis_roll_forearm:amplitude_yaw_forearm)) %>% 
+                select(-c(var_accel_forearm:var_yaw_forearm))
+```
+ 
+Once cleaned, we are left with `r dim(training)[2]` variables, which is a lot. A further analysis of correlated variables might determine how many of them are correlated, using a 90% threshold:    
+
+```{r}
+## checking correlation of left variables
+corr <- abs(cor(training[-53]))
+(sum(corr >= 0.90)-52)
+```
+
+We could remove them. However, the methods used to build a prediction model will be partition algorithms; therefore, it does not appear compulsory to reduce the number of variables.  
+
+## Model comparison
+We built 4 different models, trained on a subset of the training set, and validated on a "validation" subset of the training set.  
+
+```{r}
+
+```
+### 1. Random forest
+
+
+
+## Code
+
+```{r ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+
+```
