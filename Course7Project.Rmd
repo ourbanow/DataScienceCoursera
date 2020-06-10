@@ -1,0 +1,114 @@
+---
+title: "Impact of the type of type of transmission type on MPG"
+subtitle: "An analysis"
+author: "Olivia Urbanowski"
+date: "6/8/2020"
+output: pdf_document
+---
+
+```{r include = FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,          # don't show code
+  warning = FALSE,       # don't show warnings
+  message = FALSE,       # don't show messages (less serious warnings)
+  cache = TRUE,         
+  fig.align = "center",  # center figures
+  fig.height=4,          # set default figure size
+  fig.width=6
+)
+library(dplyr)           # load my libraries
+library(ggplot2)
+library(olsrr)           # useful library for selecting the best model
+```
+
+# Executive summary
+Based on data provided by R, we conducted a comparative analysis of the fuel economy (mpg) for automatic and manual cars, for cars on the market in 1973-1974.  
+Considering the limited amount of data available, we decided to infer the fuel economy by using the best possible linear model including transmission type.  
+It appears that manual transmissions are better for fuel economy, ie. mpg is higher for manual cars.  
+
+# Exploratory data analysis 
+The data used to explore the question of the impact of the type of transmission on the MPG is available in R - `mtcars`.  
+```{r}
+mydata <- mtcars
+## converting 2 columns into factor variables
+cols <- c("vs", "am")
+mydata[,cols] <- lapply(mydata[,cols], as.factor) 
+
+knitr::kable(mydata[1:5,],  caption = "Extract of mtcars")
+```
+
+This dataset collects for 32 car models the following information:  
+mpg - Miles/(US) gallon ; cyl - Number of cylinders ; disp - Displacement (cu.in.) ; hp - Gross horsepower ; drat - Rear axle ratio ; wt	- Weight (1000 lbs) ; qsec - 1/4 mile time ; vs	- Engine (0 = V-shaped, 1 = straight) ; am	- Transmission (0 = automatic, 1 = manual) ; gear - Number of forward gears ; carb - Number of carburetors  
+
+Focusing on the type of transmission - `am = 0` for automatic and `am = 1` for manual - it turns out it is difficult to compare directly the data we have, since the cars the data was collected from present different characteristics:  
+```{r, fig.height=2,  fig.width=3}
+p <- ggplot(data = mydata)
+p + geom_histogram(aes(x=cyl)) + facet_grid(.~am) + labs(x=
+    "cyl", y="", title =
+    "Collected data per transmission type", subtitle = 
+      "nb of cylinders")+theme(plot.title=
+     element_text(hjust = 0.5, size = 8), plot.subtitle=
+     element_text(hjust = 0.5, size = 7), axis.title.x = element_text(size = 7))
+p + geom_histogram(aes(x=hp)) + facet_grid(.~am) + labs(x="hp", title =
+  "Collected data per transmission type", subtitle ="horsepower", y=
+    "") +theme(plot.title= element_text(hjust = 0.5, size = 8), plot.subtitle=
+     element_text(hjust = 0.5, size = 7), axis.title.x = element_text(size = 7))
+p + geom_histogram(aes(x=wt)) + facet_grid(.~am) + labs(x="wt", y="", title= 
+  "Collected data per transmission type",subtitle="car weight")+theme(plot.title=
+     element_text(hjust = 0.5, size = 8), plot.subtitle=
+     element_text(hjust = 0.5, size = 7), axis.title.x = element_text(size = 7))
+```
+
+Nonetheless, we will try to fit a linear model to predict the fuel economy, with the type of transmission as a predictor (amongst others).  
+
+## 1. Model selection
+To analyze the impact of the type of transmission on fuel economy (mpg), we chose to select the best possible model - including the type of transmission `am` as a predictor - using adjusted R^2^.  
+*The code for this part can be checked in the appendix.*  
+A comparison of all possible models - thanks to the olsrr package - reveals the best predictors are:  
+
+```{r}
+fit <- lm(mpg ~ .,mydata)
+model <- ols_step_all_possible(fit) 
+## this handy function calculates the R squared 
+## and adjusted R squared for all possible models
+model <- arrange(model, desc(adjr))
+model[1,"predictors"]
+```
+
+All following analysis will thus be performed keeping only these as predictors.  
+
+## 2. Validity of the linear regression model
+
+Plotting the residuals vs. the fitted model seems to confirm linearity of the model, and no heteroskedasticity (i.e. contant variance) of the residuals:  
+```{r, fig.width=10,  fig.height=5}
+fit1 <- lm(mpg ~ disp + hp + wt + qsec + am, mydata)
+par(mfrow=c(1,2))
+plot(fit1, which =1)
+plot(fit1, which =2)
+pval <- shapiro.test(fit1$residuals)[2] ## normality test
+```
+
+Performing a normality test on the residuals also returns a rather conslusive results: a p-value of `r round(as.numeric(pval),3)`, which means we fail to reject the hypothesis of a normal distribution for the residuals.  
+**Our linear model `mpg ~ disp + hp + wt + qsec + am` is thus deemed as valid.**  
+
+## 3. Impact of the type of transmission on the fuel economy
+Running the selected linear regression model and comparing the coefficients reveals that for all other predictors kept constant, cars with a manual transmission are predicted to have an increased fuel economy of 3.47 mpg.  
+```{r}
+summary(fit1)$coef[c(1,6),]
+```
+
+The 95% confidence interval associated with this inscrease is:  
+```{r}
+confint(fit1)[6,]
+```
+
+# Conclusion
+From the collected data, we infered a linear model which, based on the performed analysis, selects displacement, gross horsepower, weight, 1/4 mile time and transmission as the best predictors for fuel economy.    
+Assuming our sample is representative of the cars on the market, the analysis we performed reveal that **a manual transmission is better for mpg. All other car characteristics being equal, a manual car would travel between `r round(confint(fit1)[6,1],2)` and `r round(confint(fit1)[6,2],2)` more miles per US gallon** (confidence interval : 95%).
+
+\pagebreak
+
+# Code
+
+```{r ref.label = knitr::all_labels(), echo = TRUE, eval = FALSE}
+```
