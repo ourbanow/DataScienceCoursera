@@ -1,0 +1,58 @@
+---
+title: "Internet use in Europe"
+subtitle: "Coursera course project - Developing data products"
+author: "ourbanow"
+date: "6/15/2020"
+output:
+  ioslides_presentation: default
+---
+
+## Introduction
+
+The European Union collects since 2002 data from countries around Europe (EU-members and some non-EU-members) about the relationship of citizens with the internet.  
+Datasets are free to access and use at this address:  
+[European Commission website](https://ec.europa.eu/info/statistics_en)  
+This data, albeit being of unequal quality depending on the country, the date and the type of collected data, is a great source of information for whoever would like to get some insights about the evolution of the use of internet in Europe over the last 2 decades.  
+With this in mind, we offer you acces to a [shinyapp](https://ourbanow.shinyapps.io/EUInternetuse/) which will help you visualize and analyze the evolution of the use of internet per type of activity, per age, per country.  
+
+## Example
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='hide'}
+library(dplyr)          
+library(ggplot2)
+library(plotly)
+activities <- read.csv(url("https://raw.githubusercontent.com/ourbanow/DataScienceCoursera/master/Developing%20Data%20Products/Internetuse.csv"))
+names(activities)[1] <- "ExpPeriod"
+activity <- "sending/receiving e-mails"
+age <- "all ages"
+countrylist <- c("European Union", "Germany", "France", "Poland", 
+                 "Spain", "United Kingdom", "Italy")
+mydata <- activities %>% 
+    filter(ExpCountry %in% countrylist) %>% 
+    filter(ExpBrkDwn == age) %>%
+    filter(Internetuse == activity)
+mytitle <- paste("Internet use:", activity, "for", age)
+mysubtitle <- "In a few selected countries"
+```
+
+```{r echo=FALSE, warning=FALSE, message=FALSE, results='asis'}
+g <- ggplot(mydata, aes(x= ExpPeriod, y = Value, colour=
+    ExpCountry)) + geom_line(    ) + scale_x_continuous(
+    name="Year", breaks = seq(2002,2020,2), limits=c(2002,
+    2019)) + scale_y_continuous(name="Percentage", breaks =
+    seq(0, 100,10), limits=c(0, 100)) + ggtitle(mytitle, 
+    subtitle =mysubtitle) + theme(plot.title = element_text(
+    hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)
+    ) + labs(colour="Country")
+ggplotly(g)
+```
+
+## Code 1/2
+
+```{r ref.label = knitr::all_labels(results == 'hide'), echo = TRUE, eval = FALSE}
+```
+
+## Code 2/2
+
+```{r ref.label = knitr::all_labels(results != 'hide'), echo = TRUE, eval = FALSE}
+```
