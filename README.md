@@ -47,6 +47,6 @@ All in all, you get what you put in. I had so much fun doing this course, I had 
 I loved it. I'm happy I did it. I can't predict the future, I don't know if that will have any kind of impact on my career. But for sure it kept me busy during a time where I needed it a lot, and it gave me a bazillion ideas of things I could do. *Stay tuned* ;-)
 
 A few links if you're curious:  
-[A interactive app showing Internet use in Europe](https://ourbanow.shinyapps.io/EUInternetuse/) built during course nb. 9
-[A end-of-your-sentence prediktor](https://ourbanow.shinyapps.io/Prediktor/) a.k.a. the result of the capstone project
+[A interactive app showing Internet use in Europe](https://ourbanow.shinyapps.io/EUInternetuse/) built during course nb. 9  
+[A end-of-your-sentence prediktor](https://ourbanow.shinyapps.io/Prediktor/) a.k.a. the result of the capstone project  
 [Get in touch](https://stackoverflow.com/users/13732596/ourbanow) (if you don't know me already)
